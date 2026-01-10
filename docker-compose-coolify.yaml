@@ -97,6 +97,12 @@ services:
 
     mysql:
         image: 'mysql:8.4'
+        command:
+            - --sort_buffer_size=256000000
+            - --read_buffer_size=2097152
+            - --read_rnd_buffer_size=2097152
+            - --join_buffer_size=2097152
+            - --max_allowed_packet=67108864
         environment:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
             MYSQL_ROOT_HOST: '%'
