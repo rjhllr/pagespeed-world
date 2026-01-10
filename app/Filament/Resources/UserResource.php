@@ -4,17 +4,19 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -57,9 +59,21 @@ class UserResource extends Resource
                             ->unique(ignoreRecord: true),
                         TextInput::make('password')
                             ->password()
+                            ->revealable()
                             ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                             ->dehydrated(fn ($state) => filled($state))
-                            ->required(fn (string $context): bool => $context === 'create'),
+                            ->required(fn (string $context): bool => $context === 'create')
+                            ->minLength(8)
+                            ->same('password_confirmation')
+                            ->label(fn (string $context): string => $context === 'create' ? 'Password' : 'New Password')
+                            ->helperText(fn (string $context): ?string => $context === 'edit' ? 'Leave empty to keep current password' : null),
+                        TextInput::make('password_confirmation')
+                            ->password()
+                            ->revealable()
+                            ->dehydrated(false)
+                            ->required(fn (string $context): bool => $context === 'create')
+                            ->visible(fn (string $context): bool => $context === 'create')
+                            ->label('Confirm Password'),
                     ])->columns(2),
 
                 Section::make('Organization & Permissions')
@@ -112,11 +126,45 @@ class UserResource extends Resource
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
-                DeleteAction::make(),
+                Action::make('changePassword')
+                    ->label('Change Password')
+                    ->icon('heroicon-o-key')
+                    ->color('warning')
+                    ->form([
+                        TextInput::make('new_password')
+                            ->label('New Password')
+                            ->password()
+                            ->revealable()
+                            ->required()
+                            ->minLength(8)
+                            ->same('new_password_confirmation'),
+                        TextInput::make('new_password_confirmation')
+                            ->label('Confirm New Password')
+                            ->password()
+                            ->revealable()
+                            ->required(),
+                    ])
+                    ->action(function (User $record, array $data): void {
+                        $record->update([
+                            'password' => Hash::make($data['new_password']),
+                        ]);
+
+                        Notification::make()
+                            ->title('Password updated successfully')
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading(fn (User $record) => "Change Password for {$record->name}")
+                    ->modalSubmitActionLabel('Update Password')
+                    ->modalWidth('md'),
+                DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->hidden(fn (User $record) => $record->id === auth()->id()),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->requiresConfirmation(),
                 ]),
             ]);
     }
