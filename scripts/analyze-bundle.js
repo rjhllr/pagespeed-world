@@ -4,9 +4,10 @@
  * Bundle Size Analyzer
  * 
  * Uses Puppeteer to measure page bundle sizes by intercepting network requests.
+ * Tracks download timing, compression ratios, and detects slow/stalling requests.
  * 
  * Usage: node analyze-bundle.js <url>
- * Output: JSON with size breakdown
+ * Output: JSON with size breakdown and timing data
  */
 
 const puppeteer = require('puppeteer');
@@ -27,15 +28,16 @@ try {
 }
 
 const resourceTypes = {
-    script: { size: 0, transferSize: 0, count: 0 },
-    stylesheet: { size: 0, transferSize: 0, count: 0 },
-    image: { size: 0, transferSize: 0, count: 0 },
-    font: { size: 0, transferSize: 0, count: 0 },
-    document: { size: 0, transferSize: 0, count: 0 },
-    other: { size: 0, transferSize: 0, count: 0 },
+    script: { size: 0, transferSize: 0, count: 0, downloadTime: 0 },
+    stylesheet: { size: 0, transferSize: 0, count: 0, downloadTime: 0 },
+    image: { size: 0, transferSize: 0, count: 0, downloadTime: 0 },
+    font: { size: 0, transferSize: 0, count: 0, downloadTime: 0 },
+    document: { size: 0, transferSize: 0, count: 0, downloadTime: 0 },
+    other: { size: 0, transferSize: 0, count: 0, downloadTime: 0 },
 };
 
 const resources = [];
+const requestTimings = new Map(); // Track request start times
 
 async function analyzeBundleSize() {
     let browser;
@@ -69,6 +71,11 @@ async function analyzeBundleSize() {
         await page.setRequestInterception(true);
         
         page.on('request', (request) => {
+            // Track when each request starts
+            requestTimings.set(request.url(), {
+                startTime: Date.now(),
+                resourceType: request.resourceType(),
+            });
             request.continue();
         });
 
@@ -84,6 +91,10 @@ async function analyzeBundleSize() {
                     return;
                 }
 
+                // Calculate download time
+                const timing = requestTimings.get(responseUrl);
+                const downloadStartTime = timing ? timing.startTime : Date.now();
+                
                 const headers = response.headers();
                 let transferSize = 0;
                 let size = 0;
@@ -93,7 +104,7 @@ async function analyzeBundleSize() {
                     transferSize = parseInt(headers['content-length'], 10);
                 }
 
-                // Try to get actual body size
+                // Try to get actual body size (this also completes the download)
                 try {
                     const buffer = await response.buffer();
                     size = buffer.length;
@@ -104,6 +115,9 @@ async function analyzeBundleSize() {
                     // Some responses can't be buffered
                     size = transferSize;
                 }
+
+                // Calculate total download time (including body download)
+                const downloadTime = Date.now() - downloadStartTime;
 
                 // Categorize resource
                 let category = 'other';
@@ -124,13 +138,22 @@ async function analyzeBundleSize() {
                 resourceTypes[category].size += size;
                 resourceTypes[category].transferSize += transferSize;
                 resourceTypes[category].count += 1;
+                resourceTypes[category].downloadTime += downloadTime;
+
+                // Calculate compression ratio (0 = no compression, higher = better compression)
+                const compressionRatio = size > 0 && transferSize > 0 && transferSize < size
+                    ? Math.round((1 - transferSize / size) * 100) 
+                    : 0;
 
                 resources.push({
                     url: responseUrl,
                     type: category,
                     size,
                     transferSize,
+                    downloadTime,
+                    compressionRatio,
                     mimeType: contentType,
+                    slow: downloadTime > 1000, // Flag if download took > 1 second
                 });
             } catch (e) {
                 // Ignore errors for individual resources
@@ -156,17 +179,32 @@ async function analyzeBundleSize() {
         let totalSize = 0;
         let totalTransferSize = 0;
         let totalRequests = 0;
+        let totalDownloadTime = 0;
 
         for (const [type, data] of Object.entries(resourceTypes)) {
             totalSize += data.size;
             totalTransferSize += data.transferSize;
             totalRequests += data.count;
+            totalDownloadTime += data.downloadTime;
         }
+
+        // Calculate overall compression ratio
+        const overallCompressionRatio = totalSize > 0 && totalTransferSize > 0
+            ? Math.round((1 - totalTransferSize / totalSize) * 100)
+            : 0;
+
+        // Find slow resources (> 1 second download time)
+        const slowResources = resources.filter(r => r.downloadTime > 1000);
 
         // Sort resources by size for the raw data
         const sortedResources = resources
             .sort((a, b) => b.size - a.size)
             .slice(0, 100); // Top 100 largest resources
+
+        // Sort by download time to find slowest
+        const slowestResources = [...resources]
+            .sort((a, b) => b.downloadTime - a.downloadTime)
+            .slice(0, 20); // Top 20 slowest resources
 
         const result = {
             success: true,
@@ -176,37 +214,64 @@ async function analyzeBundleSize() {
                 size: totalSize,
                 transferSize: totalTransferSize,
                 requests: totalRequests,
+                downloadTime: totalDownloadTime,
+                compressionRatio: overallCompressionRatio,
+                slowRequestCount: slowResources.length,
             },
             breakdown: {
                 javascript: {
                     size: resourceTypes.script.size,
                     transferSize: resourceTypes.script.transferSize,
                     requests: resourceTypes.script.count,
+                    downloadTime: resourceTypes.script.downloadTime,
+                    avgDownloadTime: resourceTypes.script.count > 0 
+                        ? Math.round(resourceTypes.script.downloadTime / resourceTypes.script.count) 
+                        : 0,
                 },
                 css: {
                     size: resourceTypes.stylesheet.size,
                     transferSize: resourceTypes.stylesheet.transferSize,
                     requests: resourceTypes.stylesheet.count,
+                    downloadTime: resourceTypes.stylesheet.downloadTime,
+                    avgDownloadTime: resourceTypes.stylesheet.count > 0 
+                        ? Math.round(resourceTypes.stylesheet.downloadTime / resourceTypes.stylesheet.count) 
+                        : 0,
                 },
                 images: {
                     size: resourceTypes.image.size,
                     transferSize: resourceTypes.image.transferSize,
                     requests: resourceTypes.image.count,
+                    downloadTime: resourceTypes.image.downloadTime,
+                    avgDownloadTime: resourceTypes.image.count > 0 
+                        ? Math.round(resourceTypes.image.downloadTime / resourceTypes.image.count) 
+                        : 0,
                 },
                 fonts: {
                     size: resourceTypes.font.size,
                     transferSize: resourceTypes.font.transferSize,
                     requests: resourceTypes.font.count,
+                    downloadTime: resourceTypes.font.downloadTime,
+                    avgDownloadTime: resourceTypes.font.count > 0 
+                        ? Math.round(resourceTypes.font.downloadTime / resourceTypes.font.count) 
+                        : 0,
                 },
                 html: {
                     size: resourceTypes.document.size,
                     transferSize: resourceTypes.document.transferSize,
                     requests: resourceTypes.document.count,
+                    downloadTime: resourceTypes.document.downloadTime,
+                    avgDownloadTime: resourceTypes.document.count > 0 
+                        ? Math.round(resourceTypes.document.downloadTime / resourceTypes.document.count) 
+                        : 0,
                 },
                 other: {
                     size: resourceTypes.other.size,
                     transferSize: resourceTypes.other.transferSize,
                     requests: resourceTypes.other.count,
+                    downloadTime: resourceTypes.other.downloadTime,
+                    avgDownloadTime: resourceTypes.other.count > 0 
+                        ? Math.round(resourceTypes.other.downloadTime / resourceTypes.other.count) 
+                        : 0,
                 },
             },
             timing: {
@@ -214,6 +279,7 @@ async function analyzeBundleSize() {
                 loadTime: loadTime,
             },
             resources: sortedResources,
+            slowestResources: slowestResources,
         };
 
         console.log(JSON.stringify(result));

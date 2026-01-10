@@ -86,6 +86,8 @@ services:
             SESSION_DRIVER: redis
             QUEUE_CONNECTION: redis
             PSI_API_KEY: '${PSI_API_KEY}'
+            PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
+            PUPPETEER_EXECUTABLE_PATH: '/usr/bin/chromium-browser'
         networks:
             - psi-network
         depends_on:

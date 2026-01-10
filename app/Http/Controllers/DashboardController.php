@@ -139,14 +139,27 @@ class DashboardController extends Controller
             $latestBundle = $bundleSizes->last();
             $data['bundleSize'] = [
                 'dates' => $bundleSizes->pluck('created_at')->map(fn ($d) => $d->format('M d H:i'))->toArray(),
-                'total' => $bundleSizes->pluck('total_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(), // KB
+                // Sizes in KB
+                'total' => $bundleSizes->pluck('total_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
+                'totalTransfer' => $bundleSizes->pluck('total_transfer_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
                 'javascript' => $bundleSizes->pluck('javascript_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
                 'css' => $bundleSizes->pluck('css_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
                 'images' => $bundleSizes->pluck('image_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
                 'fonts' => $bundleSizes->pluck('font_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
+                'html' => $bundleSizes->pluck('html_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
+                // Download times in ms
+                'jsDownloadTime' => $bundleSizes->pluck('javascript_download_time')->toArray(),
+                'cssDownloadTime' => $bundleSizes->pluck('css_download_time')->toArray(),
+                'imageDownloadTime' => $bundleSizes->pluck('image_download_time')->toArray(),
+                'loadTime' => $bundleSizes->pluck('load_time')->toArray(),
+                // Compression and slow requests
+                'compressionRatio' => $bundleSizes->pluck('compression_ratio')->toArray(),
+                'slowRequests' => $bundleSizes->pluck('slow_request_count')->toArray(),
                 'current' => [
                     'total' => $latestBundle?->total_size,
                     'totalFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->total_size ?? 0) : null,
+                    'totalTransfer' => $latestBundle?->total_transfer_size,
+                    'totalTransferFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->total_transfer_size ?? 0) : null,
                     'javascript' => $latestBundle?->javascript_size,
                     'javascriptFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->javascript_size ?? 0) : null,
                     'css' => $latestBundle?->css_size,
@@ -155,7 +168,12 @@ class DashboardController extends Controller
                     'imagesFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->image_size ?? 0) : null,
                     'fonts' => $latestBundle?->font_size,
                     'fontsFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->font_size ?? 0) : null,
+                    'html' => $latestBundle?->html_size,
+                    'htmlFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->html_size ?? 0) : null,
                     'requests' => $latestBundle?->total_requests,
+                    'loadTime' => $latestBundle?->load_time,
+                    'compressionRatio' => $latestBundle?->compression_ratio,
+                    'slowRequests' => $latestBundle?->slow_request_count,
                 ],
             ];
         }

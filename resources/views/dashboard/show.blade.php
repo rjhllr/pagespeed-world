@@ -117,44 +117,84 @@
 
             <!-- Current Bundle Size Stats -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Bundle Size</h3>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Bundle Metrics</h3>
+                
+                <!-- Size Stats Row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
-                        <div class="text-2xl font-bold text-gray-900">{{ $chartData['bundleSize']['current']['totalFormatted'] ?? '—' }}</div>
-                        <p class="text-sm text-gray-600 mt-1">Total Size</p>
+                        <div class="text-xl font-bold text-gray-900">{{ $chartData['bundleSize']['current']['totalFormatted'] ?? '—' }}</div>
+                        <p class="text-xs text-gray-500">Uncompressed</p>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Total Size</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-100 rounded-lg">
+                        <div class="text-xl font-bold text-gray-700">{{ $chartData['bundleSize']['current']['totalTransferFormatted'] ?? '—' }}</div>
+                        <p class="text-xs text-gray-500">Over Wire</p>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Transfer Size</p>
                     </div>
                     <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                        <div class="text-2xl font-bold text-yellow-700">{{ $chartData['bundleSize']['current']['javascriptFormatted'] ?? '—' }}</div>
-                        <p class="text-sm text-gray-600 mt-1">JavaScript</p>
+                        <div class="text-xl font-bold text-yellow-700">{{ $chartData['bundleSize']['current']['javascriptFormatted'] ?? '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">JavaScript</p>
                     </div>
                     <div class="text-center p-4 bg-blue-50 rounded-lg">
-                        <div class="text-2xl font-bold text-blue-700">{{ $chartData['bundleSize']['current']['cssFormatted'] ?? '—' }}</div>
-                        <p class="text-sm text-gray-600 mt-1">CSS</p>
+                        <div class="text-xl font-bold text-blue-700">{{ $chartData['bundleSize']['current']['cssFormatted'] ?? '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">CSS</p>
                     </div>
                     <div class="text-center p-4 bg-green-50 rounded-lg">
-                        <div class="text-2xl font-bold text-green-700">{{ $chartData['bundleSize']['current']['imagesFormatted'] ?? '—' }}</div>
-                        <p class="text-sm text-gray-600 mt-1">Images</p>
+                        <div class="text-xl font-bold text-green-700">{{ $chartData['bundleSize']['current']['imagesFormatted'] ?? '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Images</p>
                     </div>
                     <div class="text-center p-4 bg-purple-50 rounded-lg">
-                        <div class="text-2xl font-bold text-purple-700">{{ $chartData['bundleSize']['current']['fontsFormatted'] ?? '—' }}</div>
-                        <p class="text-sm text-gray-600 mt-1">Fonts</p>
+                        <div class="text-xl font-bold text-purple-700">{{ $chartData['bundleSize']['current']['fontsFormatted'] ?? '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Fonts</p>
                     </div>
+                    <div class="text-center p-4 bg-orange-50 rounded-lg">
+                        <div class="text-xl font-bold text-orange-700">{{ $chartData['bundleSize']['current']['htmlFormatted'] ?? '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">HTML</p>
+                    </div>
+                </div>
+
+                <!-- Performance Stats Row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="text-center p-4 bg-indigo-50 rounded-lg">
-                        <div class="text-2xl font-bold text-indigo-700">{{ $chartData['bundleSize']['current']['requests'] ?? '—' }}</div>
-                        <p class="text-sm text-gray-600 mt-1">Requests</p>
+                        <div class="text-xl font-bold text-indigo-700">{{ $chartData['bundleSize']['current']['requests'] ?? '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Total Requests</p>
+                    </div>
+                    <div class="text-center p-4 bg-cyan-50 rounded-lg">
+                        <div class="text-xl font-bold text-cyan-700">{{ $chartData['bundleSize']['current']['loadTime'] ? number_format($chartData['bundleSize']['current']['loadTime'] / 1000, 2) . 's' : '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Load Time</p>
+                    </div>
+                    <div class="text-center p-4 bg-emerald-50 rounded-lg">
+                        <div class="text-xl font-bold text-emerald-700">{{ $chartData['bundleSize']['current']['compressionRatio'] !== null ? $chartData['bundleSize']['current']['compressionRatio'] . '%' : '—' }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Compression</p>
+                    </div>
+                    <div class="text-center p-4 {{ ($chartData['bundleSize']['current']['slowRequests'] ?? 0) > 0 ? 'bg-red-50' : 'bg-gray-50' }} rounded-lg">
+                        <div class="text-xl font-bold {{ ($chartData['bundleSize']['current']['slowRequests'] ?? 0) > 0 ? 'text-red-700' : 'text-gray-700' }}">{{ $chartData['bundleSize']['current']['slowRequests'] ?? 0 }}</div>
+                        <p class="text-sm font-medium text-gray-600 mt-1">Slow Requests (&gt;1s)</p>
                     </div>
                 </div>
             </div>
 
             <!-- Bundle Size History Charts -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Total Bundle Size History</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Bundle Size (Uncompressed vs Transfer)</h3>
                     <div id="bundleTotalChart" style="height: 300px;"></div>
                 </div>
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Bundle Breakdown History</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Bundle Breakdown</h3>
                     <div id="bundleBreakdownChart" style="height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- Download Time Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Download Time by Type</h3>
+                    <div id="downloadTimeChart" style="height: 300px;"></div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Load Time & Slow Requests</h3>
+                    <div id="loadTimeChart" style="height: 300px;"></div>
                 </div>
             </div>
         </div>
@@ -292,7 +332,17 @@
 
         // Bundle Size Charts
         if (chartData.bundleSize && document.getElementById('bundleTotalChart')) {
-            // Total Bundle Size Chart
+            const formatSize = (value) => {
+                if (value === null) return 'N/A';
+                return value >= 1024 ? (value / 1024).toFixed(2) + ' MB' : value + ' KB';
+            };
+
+            const formatTime = (value) => {
+                if (value === null) return 'N/A';
+                return value >= 1000 ? (value / 1000).toFixed(2) + 's' : value + 'ms';
+            };
+
+            // Total Bundle Size Chart (Uncompressed vs Transfer)
             const bundleTotalChart = echarts.init(document.getElementById('bundleTotalChart'));
             bundleTotalChart.setOption({
                 tooltip: {
@@ -300,14 +350,13 @@
                     formatter: function(params) {
                         let result = params[0].axisValue + '<br/>';
                         params.forEach(p => {
-                            const value = p.value !== null ? (p.value >= 1024 ? (p.value / 1024).toFixed(2) + ' MB' : p.value + ' KB') : 'N/A';
-                            result += p.marker + ' ' + p.seriesName + ': ' + value + '<br/>';
+                            result += p.marker + ' ' + p.seriesName + ': ' + formatSize(p.value) + '<br/>';
                         });
                         return result;
                     }
                 },
                 legend: {
-                    data: ['Total Size'],
+                    data: ['Uncompressed', 'Transfer (Gzipped)'],
                     bottom: 0
                 },
                 grid: {
@@ -324,21 +373,26 @@
                 },
                 yAxis: {
                     type: 'value',
-                    axisLabel: {
-                        formatter: function(value) {
-                            return value >= 1024 ? (value / 1024).toFixed(1) + ' MB' : value + ' KB';
-                        }
-                    }
+                    axisLabel: { formatter: (v) => formatSize(v) }
                 },
                 series: [
                     {
-                        name: 'Total Size',
+                        name: 'Uncompressed',
                         type: 'line',
                         smooth: true,
                         data: chartData.bundleSize.total,
                         lineStyle: { color: '#6366F1' },
                         itemStyle: { color: '#6366F1' },
                         areaStyle: { color: 'rgba(99, 102, 241, 0.1)' }
+                    },
+                    {
+                        name: 'Transfer (Gzipped)',
+                        type: 'line',
+                        smooth: true,
+                        data: chartData.bundleSize.totalTransfer,
+                        lineStyle: { color: '#10B981', type: 'dashed' },
+                        itemStyle: { color: '#10B981' },
+                        areaStyle: { color: 'rgba(16, 185, 129, 0.1)' }
                     }
                 ]
             });
@@ -351,14 +405,13 @@
                     formatter: function(params) {
                         let result = params[0].axisValue + '<br/>';
                         params.forEach(p => {
-                            const value = p.value !== null ? (p.value >= 1024 ? (p.value / 1024).toFixed(2) + ' MB' : p.value + ' KB') : 'N/A';
-                            result += p.marker + ' ' + p.seriesName + ': ' + value + '<br/>';
+                            result += p.marker + ' ' + p.seriesName + ': ' + formatSize(p.value) + '<br/>';
                         });
                         return result;
                     }
                 },
                 legend: {
-                    data: ['JavaScript', 'CSS', 'Images', 'Fonts'],
+                    data: ['JavaScript', 'CSS', 'Images', 'Fonts', 'HTML'],
                     bottom: 0
                 },
                 grid: {
@@ -375,11 +428,7 @@
                 },
                 yAxis: {
                     type: 'value',
-                    axisLabel: {
-                        formatter: function(value) {
-                            return value >= 1024 ? (value / 1024).toFixed(1) + ' MB' : value + ' KB';
-                        }
-                    }
+                    axisLabel: { formatter: (v) => formatSize(v) }
                 },
                 series: [
                     {
@@ -421,6 +470,148 @@
                         lineStyle: { color: '#A855F7' },
                         itemStyle: { color: '#A855F7' },
                         areaStyle: { color: 'rgba(168, 85, 247, 0.3)' }
+                    },
+                    {
+                        name: 'HTML',
+                        type: 'line',
+                        stack: 'Total',
+                        smooth: true,
+                        data: chartData.bundleSize.html,
+                        lineStyle: { color: '#F97316' },
+                        itemStyle: { color: '#F97316' },
+                        areaStyle: { color: 'rgba(249, 115, 22, 0.3)' }
+                    }
+                ]
+            });
+
+            // Download Time Chart
+            const downloadTimeChart = echarts.init(document.getElementById('downloadTimeChart'));
+            downloadTimeChart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        let result = params[0].axisValue + '<br/>';
+                        params.forEach(p => {
+                            result += p.marker + ' ' + p.seriesName + ': ' + formatTime(p.value) + '<br/>';
+                        });
+                        return result;
+                    }
+                },
+                legend: {
+                    data: ['JavaScript', 'CSS', 'Images'],
+                    bottom: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: chartData.bundleSize.dates,
+                    axisLabel: { rotate: 45, fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { formatter: (v) => formatTime(v) }
+                },
+                series: [
+                    {
+                        name: 'JavaScript',
+                        type: 'line',
+                        smooth: true,
+                        data: chartData.bundleSize.jsDownloadTime,
+                        lineStyle: { color: '#EAB308' },
+                        itemStyle: { color: '#EAB308' }
+                    },
+                    {
+                        name: 'CSS',
+                        type: 'line',
+                        smooth: true,
+                        data: chartData.bundleSize.cssDownloadTime,
+                        lineStyle: { color: '#3B82F6' },
+                        itemStyle: { color: '#3B82F6' }
+                    },
+                    {
+                        name: 'Images',
+                        type: 'line',
+                        smooth: true,
+                        data: chartData.bundleSize.imageDownloadTime,
+                        lineStyle: { color: '#22C55E' },
+                        itemStyle: { color: '#22C55E' }
+                    }
+                ]
+            });
+
+            // Load Time & Slow Requests Chart
+            const loadTimeChart = echarts.init(document.getElementById('loadTimeChart'));
+            loadTimeChart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        let result = params[0].axisValue + '<br/>';
+                        params.forEach(p => {
+                            if (p.seriesName === 'Load Time') {
+                                result += p.marker + ' ' + p.seriesName + ': ' + formatTime(p.value) + '<br/>';
+                            } else {
+                                result += p.marker + ' ' + p.seriesName + ': ' + (p.value ?? 0) + '<br/>';
+                            }
+                        });
+                        return result;
+                    }
+                },
+                legend: {
+                    data: ['Load Time', 'Slow Requests'],
+                    bottom: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: chartData.bundleSize.dates,
+                    axisLabel: { rotate: 45, fontSize: 10 }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: 'Time',
+                        position: 'left',
+                        axisLabel: { formatter: (v) => formatTime(v) }
+                    },
+                    {
+                        type: 'value',
+                        name: 'Count',
+                        position: 'right',
+                        minInterval: 1
+                    }
+                ],
+                series: [
+                    {
+                        name: 'Load Time',
+                        type: 'line',
+                        smooth: true,
+                        data: chartData.bundleSize.loadTime,
+                        lineStyle: { color: '#0891B2' },
+                        itemStyle: { color: '#0891B2' },
+                        areaStyle: { color: 'rgba(8, 145, 178, 0.1)' }
+                    },
+                    {
+                        name: 'Slow Requests',
+                        type: 'bar',
+                        yAxisIndex: 1,
+                        data: chartData.bundleSize.slowRequests,
+                        itemStyle: { 
+                            color: function(params) {
+                                return params.value > 0 ? '#EF4444' : '#D1D5DB';
+                            }
+                        }
                     }
                 ]
             });
@@ -429,6 +620,8 @@
             window.addEventListener('resize', () => {
                 bundleTotalChart.resize();
                 bundleBreakdownChart.resize();
+                downloadTimeChart.resize();
+                loadTimeChart.resize();
             });
         }
 
