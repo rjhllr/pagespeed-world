@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PageResource\Pages;
+use App\Jobs\AnalyzeBundleSizeJob;
 use App\Jobs\AnalyzePageJob;
 use App\Models\Page;
 use Filament\Actions\Action;
@@ -171,10 +172,27 @@ class PageResource extends Resource
                     ->action(function (Page $record) {
                         AnalyzePageJob::dispatch($record, 'mobile')->onQueue('psi');
                         AnalyzePageJob::dispatch($record, 'desktop')->onQueue('psi');
+                        AnalyzeBundleSizeJob::dispatch($record)->onQueue('bundle');
                         
                         Notification::make()
                             ->title('Crawl queued')
-                            ->body('The page will be analyzed shortly.')
+                            ->body('PSI and Bundle Size analysis queued.')
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('analyze_bundle')
+                    ->label('Bundle')
+                    ->icon('heroicon-o-archive-box')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading('Analyze Bundle Size')
+                    ->modalDescription('This will analyze the bundle size of this page.')
+                    ->action(function (Page $record) {
+                        AnalyzeBundleSizeJob::dispatch($record)->onQueue('bundle');
+                        
+                        Notification::make()
+                            ->title('Bundle analysis queued')
+                            ->body('Bundle size analysis will run shortly.')
                             ->success()
                             ->send();
                     }),
@@ -193,11 +211,12 @@ class PageResource extends Resource
                             foreach ($records as $record) {
                                 AnalyzePageJob::dispatch($record, 'mobile')->onQueue('psi');
                                 AnalyzePageJob::dispatch($record, 'desktop')->onQueue('psi');
+                                AnalyzeBundleSizeJob::dispatch($record)->onQueue('bundle');
                             }
                             
                             Notification::make()
                                 ->title('Crawls queued')
-                                ->body(count($records) . ' pages queued for analysis.')
+                                ->body(count($records) . ' pages queued for PSI + Bundle analysis.')
                                 ->success()
                                 ->send();
                         }),
