@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-slot name="title">{{ $page->name }} - PSI Monitor</x-slot>
+    <x-slot name="title">{{ $page->name }} - pagespeed.world</x-slot>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->

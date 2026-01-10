@@ -41,7 +41,7 @@ class ReportNotification extends Notification implements ShouldQueue
             $message->action('View Dashboard', url('/dashboard'));
         }
 
-        return $message->line('Thank you for using PSI Monitor!');
+        return $message->line('Thank you for using pagespeed.world!');
     }
 
     public function toArray(object $notifiable): array

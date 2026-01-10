@@ -1,4 +1,4 @@
-# PSI Monitor
+# pagespeed.world
 
 A PageSpeed Insights monitoring tool built with Laravel 12 and Sail. Monitor your website performance with scheduled Lighthouse tests, view historical trends, and receive alerts for performance anomalies.
 
@@ -96,7 +96,7 @@ PSI_DAILY_QUOTA=25000
 PSI_REQUESTS_PER_MINUTE=400
 
 # Horizon
-HORIZON_PREFIX=psi-monitor-horizon:
+HORIZON_PREFIX=pagespeed-world-horizon:
 ```
 
 ### Scheduling

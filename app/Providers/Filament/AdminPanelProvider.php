@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('PSI Monitor')
+            ->brandName('pagespeed.world')
             ->colors([
                 'primary' => Color::Blue,
                 'danger' => Color::Red,
