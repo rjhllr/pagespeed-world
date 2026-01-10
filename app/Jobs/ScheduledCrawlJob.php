@@ -40,9 +40,12 @@ class ScheduledCrawlJob implements ShouldQueue
                 break;
             }
 
-            // Dispatch jobs for both mobile and desktop
+            // Dispatch jobs for both mobile and desktop PSI analysis
             AnalyzePageJob::dispatch($page, 'mobile')->onQueue('psi');
             AnalyzePageJob::dispatch($page, 'desktop')->onQueue('psi');
+
+            // Dispatch bundle size analysis job
+            AnalyzeBundleSizeJob::dispatch($page)->onQueue('bundle');
 
             // Update next crawl time
             $page->updateNextCrawlTime();

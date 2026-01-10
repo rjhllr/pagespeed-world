@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BundleSize;
 use App\Models\CrawlResult;
 use App\Models\Page;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class DashboardController extends Controller
         
         $pages = Page::where('organization_id', $user->organization_id)
             ->where('is_active', true)
-            ->with(['latestMobileResult', 'latestDesktopResult'])
+            ->with(['latestMobileResult', 'latestDesktopResult', 'latestBundleSize'])
             ->get();
 
         return view('dashboard.index', compact('pages'));
@@ -31,7 +32,7 @@ class DashboardController extends Controller
             abort(403);
         }
 
-        $page->load(['organization', 'latestMobileResult', 'latestDesktopResult']);
+        $page->load(['organization', 'latestMobileResult', 'latestDesktopResult', 'latestBundleSize']);
 
         // Get historical data for charts (last 30 days)
         $mobileResults = CrawlResult::where('page_id', $page->id)
@@ -48,10 +49,17 @@ class DashboardController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        // Prepare chart data
-        $chartData = $this->prepareChartData($mobileResults, $desktopResults);
+        // Get bundle size history
+        $bundleSizes = BundleSize::where('page_id', $page->id)
+            ->where('status', 'success')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->orderBy('created_at')
+            ->get();
 
-        return view('dashboard.show', compact('page', 'mobileResults', 'desktopResults', 'chartData'));
+        // Prepare chart data
+        $chartData = $this->prepareChartData($mobileResults, $desktopResults, $bundleSizes);
+
+        return view('dashboard.show', compact('page', 'mobileResults', 'desktopResults', 'bundleSizes', 'chartData'));
     }
 
     public function pageMetrics(Page $page)
@@ -81,9 +89,9 @@ class DashboardController extends Controller
         return response()->json($this->prepareChartData($mobileResults, $desktopResults));
     }
 
-    private function prepareChartData($mobileResults, $desktopResults)
+    private function prepareChartData($mobileResults, $desktopResults, $bundleSizes = null)
     {
-        return [
+        $data = [
             'performance' => [
                 'mobile' => [
                     'dates' => $mobileResults->pluck('created_at')->map(fn ($d) => $d->format('M d H:i'))->toArray(),
@@ -125,5 +133,33 @@ class DashboardController extends Controller
                 ],
             ],
         ];
+
+        // Add bundle size data if available
+        if ($bundleSizes) {
+            $latestBundle = $bundleSizes->last();
+            $data['bundleSize'] = [
+                'dates' => $bundleSizes->pluck('created_at')->map(fn ($d) => $d->format('M d H:i'))->toArray(),
+                'total' => $bundleSizes->pluck('total_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(), // KB
+                'javascript' => $bundleSizes->pluck('javascript_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
+                'css' => $bundleSizes->pluck('css_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
+                'images' => $bundleSizes->pluck('image_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
+                'fonts' => $bundleSizes->pluck('font_size')->map(fn ($v) => $v ? round($v / 1024) : null)->toArray(),
+                'current' => [
+                    'total' => $latestBundle?->total_size,
+                    'totalFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->total_size ?? 0) : null,
+                    'javascript' => $latestBundle?->javascript_size,
+                    'javascriptFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->javascript_size ?? 0) : null,
+                    'css' => $latestBundle?->css_size,
+                    'cssFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->css_size ?? 0) : null,
+                    'images' => $latestBundle?->image_size,
+                    'imagesFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->image_size ?? 0) : null,
+                    'fonts' => $latestBundle?->font_size,
+                    'fontsFormatted' => $latestBundle ? BundleSize::formatBytes($latestBundle->font_size ?? 0) : null,
+                    'requests' => $latestBundle?->total_requests,
+                ],
+            ];
+        }
+
+        return $data;
     }
 }

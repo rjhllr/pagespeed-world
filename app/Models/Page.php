@@ -45,6 +45,18 @@ class Page extends Model
         return $this->hasMany(Report::class);
     }
 
+    public function bundleSizes(): HasMany
+    {
+        return $this->hasMany(BundleSize::class);
+    }
+
+    public function latestBundleSize()
+    {
+        return $this->hasOne(BundleSize::class)
+            ->where('status', 'success')
+            ->latest();
+    }
+
     public function latestMobileResult()
     {
         return $this->hasOne(CrawlResult::class)

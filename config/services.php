@@ -42,4 +42,9 @@ return [
         'base_url' => 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed',
     ],
 
+    'bundle_analyzer' => [
+        'timeout' => env('BUNDLE_ANALYZER_TIMEOUT', 120),
+        'enabled' => env('BUNDLE_ANALYZER_ENABLED', true),
+    ],
+
 ];

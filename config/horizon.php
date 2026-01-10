@@ -222,6 +222,18 @@ return [
             'timeout' => 180, // PSI requests can take a while
             'nice' => 0,
         ],
+        'supervisor-bundle' => [
+            'connection' => 'redis',
+            'queue' => ['bundle'],
+            'balance' => 'simple',
+            'maxProcesses' => 2, // Limit concurrent Puppeteer instances
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 512, // Puppeteer needs more memory
+            'tries' => 2,
+            'timeout' => 180, // Bundle analysis can take a while
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -234,6 +246,9 @@ return [
             'supervisor-psi' => [
                 'maxProcesses' => 5,
             ],
+            'supervisor-bundle' => [
+                'maxProcesses' => 3,
+            ],
         ],
 
         'local' => [
@@ -241,6 +256,9 @@ return [
                 'maxProcesses' => 3,
             ],
             'supervisor-psi' => [
+                'maxProcesses' => 2,
+            ],
+            'supervisor-bundle' => [
                 'maxProcesses' => 2,
             ],
         ],

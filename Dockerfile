@@ -16,6 +16,21 @@ RUN apk add --no-cache \
     linux-headers \
     $PHPIZE_DEPS
 
+# Install Node.js and Chromium for Puppeteer
+RUN apk add --no-cache \
+    nodejs \
+    npm \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Set Puppeteer environment variables
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 # Install PHP extensions
 RUN docker-php-ext-install \
     pdo_mysql \
@@ -40,8 +55,11 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Install Node.js dependencies for bundle analyzer
+RUN cd scripts && npm install --omit=dev
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \

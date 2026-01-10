@@ -1,0 +1,13 @@
+{
+    "name": "psi-bundle-analyzer",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Bundle size analyzer using Puppeteer",
+    "main": "analyze-bundle.js",
+    "scripts": {
+        "analyze": "node analyze-bundle.js"
+    },
+    "dependencies": {
+        "puppeteer": "^23.0.0"
+    }
+}
