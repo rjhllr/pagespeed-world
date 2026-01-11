@@ -51,4 +51,13 @@ return [
         'disk' => env('SCREENSHOTS_DISK', 'public'),
     ],
 
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
+    'contact' => [
+        'email' => env('CONTACT_EMAIL', 'hello@pagespeed.world'),
+    ],
+
 ];
