@@ -10,6 +10,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -133,6 +134,15 @@ class BundleSizeResource extends Resource
                             ->disabled(),
                     ])->columns(3),
 
+                Section::make('Page Load Filmstrip')
+                    ->description('Visual timeline of how the page rendered during load')
+                    ->schema([
+                        View::make('filament.filmstrip')
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->visible(fn (?BundleSize $record): bool => $record?->hasFilmstrip() ?? false),
+
                 Section::make('Error Details')
                     ->schema([
                         Textarea::make('error_message')
@@ -181,6 +191,11 @@ class BundleSizeResource extends Resource
                     ->label('Slow')
                     ->badge()
                     ->color(fn ($state) => $state > 0 ? 'danger' : 'gray'),
+                TextColumn::make('filmstrip')
+                    ->label('Filmstrip')
+                    ->formatStateUsing(fn ($state) => $state ? count($state) . ' frames' : '-')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'info' : 'gray'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),

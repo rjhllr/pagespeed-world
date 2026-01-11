@@ -11,11 +11,13 @@ class BundleSizeService
 {
     private string $scriptPath;
     private int $timeout;
+    private ScreenshotStorageService $screenshotStorage;
 
-    public function __construct()
+    public function __construct(ScreenshotStorageService $screenshotStorage)
     {
         $this->scriptPath = base_path('scripts/analyze-bundle.js');
         $this->timeout = config('services.bundle_analyzer.timeout', 120);
+        $this->screenshotStorage = $screenshotStorage;
     }
 
     public function analyze(Page $page): ?BundleSize
@@ -68,6 +70,21 @@ class BundleSizeService
             $breakdown = $data['breakdown'] ?? [];
             $totals = $data['totals'] ?? [];
             $timing = $data['timing'] ?? [];
+            $filmstripData = $data['filmstrip'] ?? [];
+
+            // Process and store filmstrip screenshots
+            $storedFilmstrip = null;
+            if (!empty($filmstripData)) {
+                $storedFilmstrip = $this->screenshotStorage->storeFilmstrip($bundleSize, $filmstripData);
+                
+                Log::info('Stored filmstrip screenshots', [
+                    'bundle_size_id' => $bundleSize->id,
+                    'frame_count' => count($storedFilmstrip),
+                ]);
+            }
+
+            // Remove filmstrip from raw_data to save space (we store it separately)
+            unset($data['filmstrip']);
 
             $bundleSize->update([
                 'status' => 'success',
@@ -101,13 +118,18 @@ class BundleSizeService
                 'slow_request_count' => $totals['slowRequestCount'] ?? null,
                 'compression_ratio' => $totals['compressionRatio'] ?? null,
                 'raw_data' => $data,
+                'filmstrip' => $storedFilmstrip,
             ]);
 
             Log::info('Bundle size analysis completed', [
                 'page_id' => $page->id,
                 'total_size' => $bundleSize->total_size,
                 'js_size' => $bundleSize->javascript_size,
+                'has_filmstrip' => !empty($storedFilmstrip),
             ]);
+
+            // Clean up old filmstrip screenshots beyond retention limit
+            $this->screenshotStorage->cleanupOldScreenshots($page);
 
             return $bundleSize;
 

@@ -5,9 +5,10 @@
  * 
  * Uses Puppeteer to measure page bundle sizes by intercepting network requests.
  * Tracks download timing, compression ratios, and detects slow/stalling requests.
+ * Also captures filmstrip screenshots during page load for visual analysis.
  * 
  * Usage: node analyze-bundle.js <url>
- * Output: JSON with size breakdown and timing data
+ * Output: JSON with size breakdown, timing data, and filmstrip screenshots
  */
 
 const puppeteer = require('puppeteer');
@@ -38,9 +39,38 @@ const resourceTypes = {
 
 const resources = [];
 const requestTimings = new Map(); // Track request start times
+const filmstrip = []; // Store filmstrip screenshots
+
+// Screenshot capture configuration
+const SCREENSHOT_INTERVAL_MS = 500;
+const SCREENSHOT_QUALITY = 80; // WebP quality (0-100)
+const MAX_FRAMES = 12; // cap total frames per run (including event frames)
+
+/**
+ * Capture a screenshot and add it to the filmstrip
+ */
+async function captureScreenshot(page, startTime, event = null) {
+    try {
+        const timestamp = Date.now() - startTime;
+        const screenshot = await page.screenshot({
+            type: 'webp',
+            quality: SCREENSHOT_QUALITY,
+            encoding: 'base64',
+        });
+        
+        filmstrip.push({
+            timestamp,
+            event,
+            image: screenshot,
+        });
+    } catch (e) {
+        // Ignore screenshot errors (page might be navigating)
+    }
+}
 
 async function analyzeBundleSize() {
     let browser;
+    let screenshotInterval = null;
     
     try {
         // Use PUPPETEER_EXECUTABLE_PATH if set (for Alpine Linux with system Chromium)
@@ -163,9 +193,26 @@ async function analyzeBundleSize() {
         // Navigate and wait for network idle
         const startTime = Date.now();
         let domContentLoaded = null;
+        let loadEventTime = null;
         
-        page.on('domcontentloaded', () => {
+        // Capture initial screenshot (before navigation completes)
+        await captureScreenshot(page, startTime, 'start');
+        
+        // Start interval-based screenshot capture
+        screenshotInterval = setInterval(() => {
+            captureScreenshot(page, startTime);
+        }, SCREENSHOT_INTERVAL_MS);
+        
+        // Track DOMContentLoaded event
+        page.on('domcontentloaded', async () => {
             domContentLoaded = Date.now() - startTime;
+            await captureScreenshot(page, startTime, 'domContentLoaded');
+        });
+        
+        // Track load event
+        page.on('load', async () => {
+            loadEventTime = Date.now() - startTime;
+            await captureScreenshot(page, startTime, 'load');
         });
 
         await page.goto(url, {
@@ -173,7 +220,16 @@ async function analyzeBundleSize() {
             timeout: 60000,
         });
 
+        // Stop interval capture and take final screenshot
+        if (screenshotInterval) {
+            clearInterval(screenshotInterval);
+            screenshotInterval = null;
+        }
+        
         const loadTime = Date.now() - startTime;
+        
+        // Capture final screenshot at network idle
+        await captureScreenshot(page, startTime, 'networkIdle');
 
         // Calculate totals
         let totalSize = 0;
@@ -205,6 +261,18 @@ async function analyzeBundleSize() {
         const slowestResources = [...resources]
             .sort((a, b) => b.downloadTime - a.downloadTime)
             .slice(0, 20); // Top 20 slowest resources
+        
+        // Sort filmstrip by timestamp and deduplicate close timestamps, then cap total frames
+        const sortedFilmstrip = filmstrip
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .filter((frame, index, arr) => {
+                // Keep event frames and frames that are at least 300ms apart
+                if (frame.event) return true;
+                if (index === 0) return true;
+                const prevFrame = arr[index - 1];
+                return frame.timestamp - prevFrame.timestamp >= 300;
+            })
+            .slice(0, MAX_FRAMES);
 
         const result = {
             success: true,
@@ -276,15 +344,22 @@ async function analyzeBundleSize() {
             },
             timing: {
                 domContentLoaded: domContentLoaded,
+                loadEvent: loadEventTime,
                 loadTime: loadTime,
             },
             resources: sortedResources,
             slowestResources: slowestResources,
+            filmstrip: sortedFilmstrip,
         };
 
         console.log(JSON.stringify(result));
 
     } catch (error) {
+        // Clean up interval on error
+        if (screenshotInterval) {
+            clearInterval(screenshotInterval);
+        }
+        
         console.log(JSON.stringify({
             success: false,
             error: error.message,

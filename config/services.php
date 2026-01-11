@@ -47,4 +47,8 @@ return [
         'enabled' => env('BUNDLE_ANALYZER_ENABLED', true),
     ],
 
+    'screenshots' => [
+        'disk' => env('SCREENSHOTS_DISK', 'public'),
+    ],
+
 ];

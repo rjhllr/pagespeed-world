@@ -78,7 +78,14 @@ class OrganizationResource extends Resource
                             ->default(24)
                             ->minValue(1)
                             ->maxValue(168),
-                    ])->columns(3),
+                        TextInput::make('max_filmstrip_retention')
+                            ->label('Max Filmstrip Retention')
+                            ->helperText('Maximum bundle size crawls to keep screenshots for (per page)')
+                            ->numeric()
+                            ->default(10)
+                            ->minValue(1)
+                            ->maxValue(100),
+                    ])->columns(4),
             ]);
     }
 

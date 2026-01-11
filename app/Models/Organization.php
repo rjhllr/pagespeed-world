@@ -19,12 +19,14 @@ class Organization extends Model
         'is_active',
         'max_pages',
         'min_crawl_interval_hours',
+        'max_filmstrip_retention',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'max_pages' => 'integer',
         'min_crawl_interval_hours' => 'integer',
+        'max_filmstrip_retention' => 'integer',
     ];
 
     protected static function boot()

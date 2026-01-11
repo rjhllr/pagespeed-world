@@ -42,6 +42,7 @@ class BundleSize extends Model
         'slow_request_count',
         'compression_ratio',
         'raw_data',
+        'filmstrip',
         'status',
         'error_message',
     ];
@@ -77,6 +78,7 @@ class BundleSize extends Model
         'slow_request_count' => 'integer',
         'compression_ratio' => 'integer',
         'raw_data' => 'array',
+        'filmstrip' => 'array',
     ];
 
     public function page(): BelongsTo
@@ -136,5 +138,27 @@ class BundleSize extends Model
         $percentageChange = (($this->total_size - $previousResult->total_size) / $previousResult->total_size) * 100;
         
         return abs($percentageChange) >= $percentageThreshold;
+    }
+
+    /**
+     * Check if this bundle size has filmstrip screenshots
+     */
+    public function hasFilmstrip(): bool
+    {
+        return !empty($this->filmstrip);
+    }
+
+    /**
+     * Get filmstrip with URLs instead of paths
+     * URLs are proxied through authenticated controller for private bucket support
+     */
+    public function getFilmstripUrls(): array
+    {
+        if (!$this->hasFilmstrip()) {
+            return [];
+        }
+
+        $storageService = app(\App\Services\ScreenshotStorageService::class);
+        return $storageService->getFilmstripUrls($this->id, $this->filmstrip);
     }
 }

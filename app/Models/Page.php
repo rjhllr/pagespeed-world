@@ -21,6 +21,7 @@ class Page extends Model
         'crawl_interval_hours',
         'last_crawled_at',
         'next_crawl_at',
+        'filmstrip_retention_count',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class Page extends Model
         'crawl_interval_hours' => 'integer',
         'last_crawled_at' => 'datetime',
         'next_crawl_at' => 'datetime',
+        'filmstrip_retention_count' => 'integer',
     ];
 
     public function organization(): BelongsTo
@@ -101,5 +103,21 @@ class Page extends Model
             ->where('status', 'success')
             ->where('created_at', '>=', now()->subDays($days))
             ->avg('performance_score');
+    }
+
+    /**
+     * Get the effective filmstrip retention count for this page.
+     * Uses page setting if set, otherwise falls back to organization max.
+     * Always capped by organization max.
+     */
+    public function getEffectiveFilmstripRetention(): int
+    {
+        $orgMax = $this->organization->max_filmstrip_retention ?? 10;
+        
+        if ($this->filmstrip_retention_count !== null) {
+            return min($this->filmstrip_retention_count, $orgMax);
+        }
+        
+        return $orgMax;
     }
 }

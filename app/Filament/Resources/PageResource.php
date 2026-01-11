@@ -85,7 +85,14 @@ class PageResource extends Resource
                         DateTimePicker::make('next_crawl_at')
                             ->label('Next Crawl')
                             ->nullable(),
-                    ])->columns(3),
+                        TextInput::make('filmstrip_retention_count')
+                            ->label('Filmstrip Retention')
+                            ->helperText('Keep screenshots for last X crawls (leave empty for org default)')
+                            ->numeric()
+                            ->nullable()
+                            ->minValue(1)
+                            ->maxValue(100),
+                    ])->columns(4),
 
                 Section::make('Status')
                     ->schema([
