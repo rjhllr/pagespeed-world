@@ -15,7 +15,11 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $pagesQuery = Page::with(['latestMobileResult', 'latestDesktopResult', 'latestBundleSize'])
+        $pagesQuery = Page::with([
+                'latestMobileResult:id,page_id,strategy,status,performance_score,created_at,largest_contentful_paint,first_contentful_paint,total_blocking_time,cumulative_layout_shift',
+                'latestDesktopResult:id,page_id,strategy,status,performance_score,created_at,largest_contentful_paint,first_contentful_paint,total_blocking_time,cumulative_layout_shift',
+                'latestBundleSize:id,page_id,total_transfer_size,total_size,created_at',
+            ])
             ->orderBy('name');
 
         if (!$user->is_admin) {
@@ -43,32 +47,79 @@ class DashboardController extends Controller
         $page->load(['organization', 'latestMobileResult', 'latestDesktopResult', 'latestBundleSize']);
 
         // Get historical data for charts (last 30 days)
+        $metricsColumns = [
+            'id',
+            'page_id',
+            'strategy',
+            'status',
+            'performance_score',
+            'accessibility_score',
+            'best_practices_score',
+            'seo_score',
+            'first_contentful_paint',
+            'largest_contentful_paint',
+            'total_blocking_time',
+            'cumulative_layout_shift',
+            'created_at',
+        ];
+
         $mobileResults = CrawlResult::where('page_id', $page->id)
             ->where('strategy', 'mobile')
             ->where('status', 'success')
             ->where('created_at', '>=', now()->subDays(30))
             ->orderBy('created_at')
-            ->get();
+            ->get($metricsColumns);
 
         $desktopResults = CrawlResult::where('page_id', $page->id)
             ->where('strategy', 'desktop')
             ->where('status', 'success')
             ->where('created_at', '>=', now()->subDays(30))
             ->orderBy('created_at')
-            ->get();
+            ->get($metricsColumns);
 
         // Get bundle size history
+        $bundleColumns = [
+            'id',
+            'page_id',
+            'total_size',
+            'total_transfer_size',
+            'javascript_size',
+            'css_size',
+            'image_size',
+            'font_size',
+            'html_size',
+            'javascript_download_time',
+            'css_download_time',
+            'image_download_time',
+            'load_time',
+            'total_requests',
+            'slow_request_count',
+            'compression_ratio',
+            'created_at',
+        ];
+
         $bundleSizes = BundleSize::where('page_id', $page->id)
             ->where('status', 'success')
             ->where('created_at', '>=', now()->subDays(30))
             ->orderBy('created_at')
-            ->get();
+            ->get($bundleColumns);
 
         $latestFilmstripBundle = $page->bundleSizes()
             ->where('status', 'success')
             ->whereNotNull('filmstrip')
             ->where('filmstrip', '!=', '[]')
             ->latest()
+            ->select([
+                'id',
+                'page_id',
+                'filmstrip',
+                'load_time',
+                'dom_content_loaded',
+                'total_requests',
+                'total_size',
+                'total_transfer_size',
+                'created_at',
+            ])
             ->first();
 
         $filmstripFrames = $latestFilmstripBundle ? $latestFilmstripBundle->getFilmstripUrls() : [];
