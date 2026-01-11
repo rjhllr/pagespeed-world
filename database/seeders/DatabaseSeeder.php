@@ -44,6 +44,8 @@ class DatabaseSeeder extends Seeder
             'is_org_admin' => true,
         ]);
 
+        $orgUser->organizations()->sync([$demoOrg->id]);
+
         // Create some demo pages
         $pages = [
             [

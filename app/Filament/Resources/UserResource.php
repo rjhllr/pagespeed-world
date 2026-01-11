@@ -3,7 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers\OrganizationsRelationManager;
 use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
@@ -11,12 +18,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -78,11 +79,13 @@ class UserResource extends Resource
 
                 Section::make('Organization & Permissions')
                     ->schema([
-                        Select::make('organization_id')
-                            ->relationship('organization', 'name')
-                            ->searchable()
+                        Select::make('organizations')
+                            ->label('Organizations')
+                            ->relationship('organizations', 'name')
+                            ->multiple()
                             ->preload()
-                            ->nullable(),
+                            ->searchable()
+                            ->helperText('Assign one or more organizations. Leave empty for platform-only admins.'),
                         Toggle::make('is_admin')
                             ->label('Platform Admin')
                             ->helperText('Can access admin panel and manage all organizations'),
@@ -103,9 +106,12 @@ class UserResource extends Resource
                 TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('organization.name')
-                    ->sortable()
-                    ->placeholder('No organization'),
+                TextColumn::make('organizations.name')
+                    ->label('Organizations')
+                    ->badge()
+                    ->limitList(3)
+                    ->listWithLineBreaks()
+                    ->placeholder('None'),
                 IconColumn::make('is_admin')
                     ->label('Admin')
                     ->boolean(),
@@ -118,8 +124,9 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('organization')
-                    ->relationship('organization', 'name'),
+                SelectFilter::make('organizations')
+                    ->label('Organizations')
+                    ->relationship('organizations', 'name'),
                 TernaryFilter::make('is_admin')
                     ->label('Platform Admin'),
             ])
@@ -171,7 +178,9 @@ class UserResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            OrganizationsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

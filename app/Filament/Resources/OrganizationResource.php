@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrganizationResource\Pages;
+use App\Filament\Resources\OrganizationResource\RelationManagers\UsersRelationManager;
 use App\Models\Organization;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -129,7 +130,9 @@ class OrganizationResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            UsersRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

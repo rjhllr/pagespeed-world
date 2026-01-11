@@ -6,6 +6,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -58,6 +59,20 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsTo(Organization::class);
     }
 
+    public function organizations(): BelongsToMany
+    {
+        return $this->belongsToMany(Organization::class)->withTimestamps();
+    }
+
+    public function primaryOrganization(): ?Organization
+    {
+        if ($this->relationLoaded('organization') || $this->organization_id) {
+            return $this->organization;
+        }
+
+        return $this->organizations->first();
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         // Admin panel is only for platform admins
@@ -84,6 +99,6 @@ class User extends Authenticatable implements FilamentUser
             return true;
         }
 
-        return $this->organization_id === $organization->id && $this->is_org_admin;
+        return $this->is_org_admin && $this->organizations->contains('id', $organization->id);
     }
 }

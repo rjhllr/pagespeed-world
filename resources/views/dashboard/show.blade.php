@@ -1,266 +1,323 @@
-<x-app-layout>
-    <x-slot name="title">{{ $page->name }} - pagespeed.world</x-slot>
+@php
+    $latestBundle = $chartData['bundleSize']['current'] ?? null;
+@endphp
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <a href="/dashboard" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<x-app-layout :title="$page->name . ' - pagespeed.world'">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 text-slate-300 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                 </svg>
-                Back to Dashboard
+                Back
             </a>
-            <div class="flex items-start justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ $page->name }}</h1>
-                    <a href="{{ $page->url }}" target="_blank" class="text-sm text-blue-600 hover:underline">
-                        {{ $page->url }}
-                        <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                    </a>
-                </div>
-                <span class="text-sm text-gray-500">
-                    Last crawled: {{ $page->last_crawled_at ? $page->last_crawled_at->diffForHumans() : 'Never' }}
-                </span>
-            </div>
+            <span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>
+            Dashboard
         </div>
 
-        <!-- Current Scores -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Mobile Scores -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                    </svg>
-                    Mobile
-                </h2>
-                <div class="grid grid-cols-4 gap-4">
-                    @foreach(['performance' => 'Performance', 'accessibility' => 'Accessibility', 'bestPractices' => 'Best Practices', 'seo' => 'SEO'] as $key => $label)
-                    @php
-                        $score = $chartData['scores']['mobile'][$key];
-                        $bgColor = $score >= 90 ? 'bg-green-100' : ($score >= 50 ? 'bg-orange-100' : 'bg-red-100');
-                        $textColor = $score >= 90 ? 'text-green-700' : ($score >= 50 ? 'text-orange-700' : 'text-red-700');
-                    @endphp
-                    <div class="text-center">
-                        <div class="w-16 h-16 mx-auto rounded-full {{ $score ? $bgColor : 'bg-gray-100' }} flex items-center justify-center">
-                            <span class="text-xl font-bold {{ $score ? $textColor : 'text-gray-400' }}">{{ $score ?? '—' }}</span>
+        <div class="relative overflow-hidden rounded-2xl border border-white/10 shadow-card">
+            @if($heroBackgroundUrl)
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $heroBackgroundUrl }}')"></div>
+                <div class="absolute inset-0 bg-gradient-to-br from-slate-950/55 via-slate-950/45 to-slate-950/55"></div>
+            @else
+                <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900"></div>
+            @endif
+            <div class="relative p-6 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div class="space-y-2">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-300">Page</p>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-4xl font-semibold text-white drop-shadow">{{ $page->name }}</h1>
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold {{ $page->is_active ? 'bg-emerald-500/25 text-emerald-100 border border-emerald-400/50' : 'bg-white/10 text-slate-100 border border-white/20' }}">
+                                <span class="h-2 w-2 rounded-full {{ $page->is_active ? 'bg-emerald-200' : 'bg-slate-300' }}"></span>
+                                {{ $page->is_active ? 'Active' : 'Inactive' }}
+                            </span>
                         </div>
-                        <p class="mt-2 text-xs font-medium text-gray-600">{{ $label }}</p>
+                        <a href="{{ $page->url }}" target="_blank" class="inline-flex items-center gap-2 text-sm text-cyan-100 hover:text-white">
+                            {{ $page->url }}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
                     </div>
-                    @endforeach
+                    <div class="flex flex-wrap gap-2 text-xs text-slate-100">
+                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 border border-white/20 backdrop-blur">
+                            <span class="h-2 w-2 rounded-full bg-brand-300"></span>
+                            Last crawled {{ $page->last_crawled_at ? $page->last_crawled_at->diffForHumans() : '—' }}
+                        </span>
+                        @if($latestBundle)
+                            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 border border-white/20 backdrop-blur">
+                                <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
+                                Transfer {{ $latestBundle['totalTransferFormatted'] ?? '—' }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
-            </div>
 
-            <!-- Desktop Scores -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    Desktop
-                </h2>
-                <div class="grid grid-cols-4 gap-4">
-                    @foreach(['performance' => 'Performance', 'accessibility' => 'Accessibility', 'bestPractices' => 'Best Practices', 'seo' => 'SEO'] as $key => $label)
-                    @php
-                        $score = $chartData['scores']['desktop'][$key];
-                        $bgColor = $score >= 90 ? 'bg-green-100' : ($score >= 50 ? 'bg-orange-100' : 'bg-red-100');
-                        $textColor = $score >= 90 ? 'text-green-700' : ($score >= 50 ? 'text-orange-700' : 'text-red-700');
-                    @endphp
-                    <div class="text-center">
-                        <div class="w-16 h-16 mx-auto rounded-full {{ $score ? $bgColor : 'bg-gray-100' }} flex items-center justify-center">
-                            <span class="text-xl font-bold {{ $score ? $textColor : 'text-gray-400' }}">{{ $score ?? '—' }}</span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur">
+                        <p class="text-[11px] uppercase tracking-wide text-slate-200">Mobile</p>
+                        <div class="mt-1 text-4xl font-semibold text-white drop-shadow-sm">
+                            {{ $chartData['scores']['mobile']['performance'] ?? '—' }}
                         </div>
-                        <p class="mt-2 text-xs font-medium text-gray-600">{{ $label }}</p>
+                        <p class="text-xs text-slate-200 mt-1">Perf · A11y · BP · SEO</p>
+                        <div class="mt-3 grid grid-cols-4 gap-1 text-[11px] text-slate-100">
+                            @foreach(['performance' => 'P', 'accessibility' => 'A', 'bestPractices' => 'BP', 'seo' => 'SEO'] as $key => $label)
+                                <div class="flex flex-col items-center bg-white/10 rounded-md py-2">
+                                    <span class="font-semibold text-white">{{ $chartData['scores']['mobile'][$key] ?? '—' }}</span>
+                                    <span class="text-[10px] text-slate-200">{{ $label }}</span>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-                    @endforeach
+                    <div class="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur">
+                        <p class="text-[11px] uppercase tracking-wide text-slate-200">Desktop</p>
+                        <div class="mt-1 text-4xl font-semibold text-white drop-shadow-sm">
+                            {{ $chartData['scores']['desktop']['performance'] ?? '—' }}
+                        </div>
+                        <p class="text-xs text-slate-200 mt-1">Perf · A11y · BP · SEO</p>
+                        <div class="mt-3 grid grid-cols-4 gap-1 text-[11px] text-slate-100">
+                            @foreach(['performance' => 'P', 'accessibility' => 'A', 'bestPractices' => 'BP', 'seo' => 'SEO'] as $key => $label)
+                                <div class="flex flex-col items-center bg-white/10 rounded-md py-2">
+                                    <span class="font-semibold text-white">{{ $chartData['scores']['desktop'][$key] ?? '—' }}</span>
+                                    <span class="text-[10px] text-slate-200">{{ $label }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur flex flex-col justify-between">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wide text-slate-200">Bundle</p>
+                            <div class="mt-1 text-2xl font-semibold text-white drop-shadow-sm">
+                                {{ $latestBundle['totalTransferFormatted'] ?? '—' }} transfer
+                            </div>
+                            <p class="text-xs text-slate-200 mt-1">Uncompressed {{ $latestBundle['totalFormatted'] ?? '—' }}</p>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-100">
+                            <div class="bg-white/10 rounded-lg p-2">
+                                <p class="text-[10px] uppercase tracking-wide text-slate-200">Requests</p>
+                                <p class="text-sm font-semibold text-white">{{ $latestBundle['requests'] ?? '—' }}</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-2">
+                                <p class="text-[10px] uppercase tracking-wide text-slate-200">Load</p>
+                                <p class="text-sm font-semibold text-white">{{ isset($latestBundle['loadTime']) ? number_format($latestBundle['loadTime'] / 1000, 2) . 's' : '—' }}</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-2">
+                                <p class="text-[10px] uppercase tracking-wide text-slate-200">Compression</p>
+                                <p class="text-sm font-semibold text-white">{{ $latestBundle['compressionRatio'] !== null ? $latestBundle['compressionRatio'] . '%' : '—' }}</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-2">
+                                <p class="text-[10px] uppercase tracking-wide text-slate-200">Slow reqs</p>
+                                <p class="text-sm font-semibold text-white">{{ $latestBundle['slowRequests'] ?? 0 }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Performance History Chart -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Performance History</h2>
-            <div id="performanceChart" style="height: 400px;"></div>
-        </div>
-
-        <!-- Core Web Vitals Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">LCP (Largest Contentful Paint)</h2>
-                <div id="lcpChart" style="height: 300px;"></div>
-            </div>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">FCP (First Contentful Paint)</h2>
-                <div id="fcpChart" style="height: 300px;"></div>
-            </div>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">TBT (Total Blocking Time)</h2>
-                <div id="tbtChart" style="height: 300px;"></div>
-            </div>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">CLS (Cumulative Layout Shift)</h2>
-                <div id="clsChart" style="height: 300px;"></div>
-            </div>
-        </div>
-
-        <!-- Bundle Size Section -->
-        @if(isset($chartData['bundleSize']))
-        <div class="mb-8">
-            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
-                </svg>
-                Bundle Size Analysis
-            </h2>
-
-            <!-- Current Bundle Size Stats -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Bundle Metrics</h3>
-                
-                <!-- Size Stats Row -->
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
-                    <div class="text-center p-4 bg-gray-50 rounded-lg">
-                        <div class="text-xl font-bold text-gray-900">{{ $chartData['bundleSize']['current']['totalFormatted'] ?? '—' }}</div>
-                        <p class="text-xs text-gray-500">Uncompressed</p>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Total Size</p>
-                    </div>
-                    <div class="text-center p-4 bg-gray-100 rounded-lg">
-                        <div class="text-xl font-bold text-gray-700">{{ $chartData['bundleSize']['current']['totalTransferFormatted'] ?? '—' }}</div>
-                        <p class="text-xs text-gray-500">Over Wire</p>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Transfer Size</p>
-                    </div>
-                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                        <div class="text-xl font-bold text-yellow-700">{{ $chartData['bundleSize']['current']['javascriptFormatted'] ?? '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">JavaScript</p>
-                    </div>
-                    <div class="text-center p-4 bg-blue-50 rounded-lg">
-                        <div class="text-xl font-bold text-blue-700">{{ $chartData['bundleSize']['current']['cssFormatted'] ?? '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">CSS</p>
-                    </div>
-                    <div class="text-center p-4 bg-green-50 rounded-lg">
-                        <div class="text-xl font-bold text-green-700">{{ $chartData['bundleSize']['current']['imagesFormatted'] ?? '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Images</p>
-                    </div>
-                    <div class="text-center p-4 bg-purple-50 rounded-lg">
-                        <div class="text-xl font-bold text-purple-700">{{ $chartData['bundleSize']['current']['fontsFormatted'] ?? '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Fonts</p>
-                    </div>
-                    <div class="text-center p-4 bg-orange-50 rounded-lg">
-                        <div class="text-xl font-bold text-orange-700">{{ $chartData['bundleSize']['current']['htmlFormatted'] ?? '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">HTML</p>
-                    </div>
+        <div class="grid grid-cols-1 gap-6">
+            <div class="bg-white/5 border border-white/10 rounded-2xl shadow-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-white">Performance history</h2>
+                    <span class="text-xs text-slate-400">Last 30 days</span>
                 </div>
-
-                <!-- Performance Stats Row -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="text-center p-4 bg-indigo-50 rounded-lg">
-                        <div class="text-xl font-bold text-indigo-700">{{ $chartData['bundleSize']['current']['requests'] ?? '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Total Requests</p>
-                    </div>
-                    <div class="text-center p-4 bg-cyan-50 rounded-lg">
-                        <div class="text-xl font-bold text-cyan-700">{{ $chartData['bundleSize']['current']['loadTime'] ? number_format($chartData['bundleSize']['current']['loadTime'] / 1000, 2) . 's' : '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Load Time</p>
-                    </div>
-                    <div class="text-center p-4 bg-emerald-50 rounded-lg">
-                        <div class="text-xl font-bold text-emerald-700">{{ $chartData['bundleSize']['current']['compressionRatio'] !== null ? $chartData['bundleSize']['current']['compressionRatio'] . '%' : '—' }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Compression</p>
-                    </div>
-                    <div class="text-center p-4 {{ ($chartData['bundleSize']['current']['slowRequests'] ?? 0) > 0 ? 'bg-red-50' : 'bg-gray-50' }} rounded-lg">
-                        <div class="text-xl font-bold {{ ($chartData['bundleSize']['current']['slowRequests'] ?? 0) > 0 ? 'text-red-700' : 'text-gray-700' }}">{{ $chartData['bundleSize']['current']['slowRequests'] ?? 0 }}</div>
-                        <p class="text-sm font-medium text-gray-600 mt-1">Slow Requests (&gt;1s)</p>
-                    </div>
-                </div>
+                <div id="performanceChart" style="height: 360px;"></div>
             </div>
 
-            <!-- Bundle Size History Charts -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Bundle Size (Uncompressed vs Transfer)</h3>
-                    <div id="bundleTotalChart" style="height: 300px;"></div>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Bundle Breakdown</h3>
-                    <div id="bundleBreakdownChart" style="height: 300px;"></div>
-                </div>
-            </div>
-
-            <!-- Download Time Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Download Time by Type</h3>
-                    <div id="downloadTimeChart" style="height: 300px;"></div>
+                <div class="bg-white/5 border border-white/10 rounded-2xl shadow-card p-6">
+                    <h2 class="text-lg font-semibold text-white mb-3">LCP (Largest Contentful Paint)</h2>
+                    <div id="lcpChart" style="height: 260px;"></div>
                 </div>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Load Time & Slow Requests</h3>
-                    <div id="loadTimeChart" style="height: 300px;"></div>
+                <div class="bg-white/5 border border-white/10 rounded-2xl shadow-card p-6">
+                    <h2 class="text-lg font-semibold text-white mb-3">FCP (First Contentful Paint)</h2>
+                    <div id="fcpChart" style="height: 260px;"></div>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-2xl shadow-card p-6">
+                    <h2 class="text-lg font-semibold text-white mb-3">TBT (Total Blocking Time)</h2>
+                    <div id="tbtChart" style="height: 260px;"></div>
+                </div>
+                <div class="bg-white/5 border border-white/10 rounded-2xl shadow-card p-6">
+                    <h2 class="text-lg font-semibold text-white mb-3">CLS (Cumulative Layout Shift)</h2>
+                    <div id="clsChart" style="height: 260px;"></div>
                 </div>
             </div>
+
+            @if(isset($chartData['bundleSize']))
+                <div class="bg-white/5 border border-white/10 rounded-2xl shadow-card p-6 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">Bundle size analysis</h2>
+                            <p class="text-sm text-slate-300">Size breakdown and timing across the latest 30 days.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-semibold text-white mb-2">Bundle size (uncompressed vs transfer)</h3>
+                            <div id="bundleTotalChart" style="height: 260px;"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-white mb-2">Bundle breakdown</h3>
+                            <div id="bundleBreakdownChart" style="height: 260px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-semibold text-white mb-2">Download time by type</h3>
+                            <div id="downloadTimeChart" style="height: 240px;"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-white mb-2">Load time &amp; slow requests</h3>
+                            <div id="loadTimeChart" style="height: 240px;"></div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if(!empty($filmstripFrames))
+                <div class="bg-white/5 border border-white/10 rounded-2xl shadow-card p-6 space-y-4">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">Rendering filmstrip</h2>
+                            <p class="text-sm text-slate-300">Navigate frames, click to preview, and match them to core events.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs text-slate-300">
+                            @if($filmstripMeta)
+                                <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                                    <span class="h-2 w-2 rounded-full bg-brand-400"></span>
+                                    Captured {{ \Carbon\Carbon::parse($filmstripMeta['capturedAt'])->diffForHumans() }}
+                                </span>
+                                <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                                    <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
+                                    {{ $filmstripMeta['requestCount'] ?? '—' }} requests
+                                </span>
+                                <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                                    <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
+                                    {{ $filmstripMeta['loadTime'] ? number_format($filmstripMeta['loadTime'] / 1000, 2) . 's' : '—' }} load
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="lg:col-span-2 space-y-3">
+                            <div class="flex items-center gap-3 overflow-x-auto pb-2" id="filmstripTrack">
+                                @foreach($filmstripFrames as $frame)
+                                    <button
+                                        type="button"
+                                        data-frame="{{ $frame['timestamp'] }}"
+                                        data-url="{{ $frame['url'] }}"
+                                        data-event="{{ $frame['event'] ?? '' }}"
+                                        class="relative shrink-0 rounded-xl border border-white/10 bg-white/5 hover:border-brand-400 transition focus:outline-none"
+                                        style="width: 120px"
+                                    >
+                                        <div class="aspect-[4/3] overflow-hidden rounded-t-xl bg-slate-900">
+                                            @if(!empty($frame['url']))
+                                                <img src="{{ $frame['url'] }}" alt="Filmstrip frame" class="w-full h-full object-cover">
+                                            @endif
+                                        </div>
+                                        <div class="px-3 py-2 text-left">
+                                            <p class="text-[11px] font-semibold text-white">{{ number_format(($frame['timestamp'] ?? 0) / 1000, 2) }}s</p>
+                                            <p class="text-[10px] text-slate-400">{{ $frame['event'] ?? 'Frame' }}</p>
+                                        </div>
+                                        @if(!empty($frame['event']))
+                                            <span class="absolute -top-2 -right-2 px-2 py-1 rounded-full text-[10px] font-semibold bg-brand-500 text-white border border-brand-400/50">{{ strtoupper($frame['event']) }}</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                            <p class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="h-2 w-2 rounded-full bg-brand-400"></span>
+                                Selected frame
+                            </p>
+                            <div class="aspect-video bg-slate-900 rounded-lg overflow-hidden">
+                                <img id="filmstripPreview" src="{{ $filmstripFrames[array_key_last($filmstripFrames)]['url'] ?? '' }}" alt="Filmstrip preview" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex items-center gap-3 text-sm text-slate-200">
+                                <span id="filmstripEvent" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold">
+                                    {{ !empty($filmstripFrames) && $filmstripFrames[array_key_last($filmstripFrames)]['event'] ? strtoupper($filmstripFrames[array_key_last($filmstripFrames)]['event']) : 'FRAME' }}
+                                </span>
+                                <span id="filmstripTimestamp" class="text-xs text-slate-400">
+                                    {{ !empty($filmstripFrames) ? number_format(($filmstripFrames[array_key_last($filmstripFrames)]['timestamp'] ?? 0) / 1000, 2) . 's' : '—' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
-        @endif
     </div>
 
     <x-slot name="scripts">
     <script>
         const chartData = @json($chartData);
-        
-        // Performance History Chart
+        const bucketed = chartData.bucketed || {};
+        const textColor = '#cbd5e1';
+        const axisLine = { lineStyle: { color: '#475569' } };
+        const axisLabel = { color: textColor, fontSize: 11 };
+        const splitLine = { lineStyle: { color: 'rgba(148, 163, 184, 0.2)' } };
+        const perfLabels = bucketed.labels || [];
+        const smoothLines = bucketed.smoothing === undefined ? true : bucketed.smoothing;
+
+        // Performance History Chart (bucketed hourly, smoothed)
         const performanceChart = echarts.init(document.getElementById('performanceChart'));
         performanceChart.setOption({
+            textStyle: { color: textColor },
             tooltip: {
                 trigger: 'axis',
                 axisPointer: { type: 'cross' }
             },
             legend: {
                 data: ['Mobile', 'Desktop'],
-                bottom: 0
+                bottom: 0,
+                textStyle: { color: textColor }
             },
-            grid: {
-                left: '3%',
-                right: '4%',
-                bottom: '15%',
-                containLabel: true
-            },
+            grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: chartData.performance.mobile.dates.length > chartData.performance.desktop.dates.length 
-                    ? chartData.performance.mobile.dates 
-                    : chartData.performance.desktop.dates,
-                axisLabel: { rotate: 45 }
+                data: perfLabels,
+                axisLabel: { rotate: 45, ...axisLabel },
+                axisLine,
             },
             yAxis: {
                 type: 'value',
                 min: 0,
                 max: 100,
-                axisLabel: { formatter: '{value}' }
+                axisLabel: { formatter: '{value}', ...axisLabel },
+                axisLine,
+                splitLine,
             },
             series: [
                 {
                     name: 'Mobile',
                     type: 'line',
-                    smooth: true,
-                    data: chartData.performance.mobile.scores,
-                    lineStyle: { color: '#3B82F6' },
-                    itemStyle: { color: '#3B82F6' },
-                    areaStyle: { color: 'rgba(59, 130, 246, 0.1)' },
+                    smooth: smoothLines,
+                    data: bucketed.mobile?.performance || [],
+                    lineStyle: { color: '#60a5fa' },
+                    itemStyle: { color: '#60a5fa' },
+                    areaStyle: { color: 'rgba(96, 165, 250, 0.12)' },
                     markLine: {
                         silent: true,
                         data: [
-                            { yAxis: 90, lineStyle: { color: '#10B981', type: 'dashed' } },
-                            { yAxis: 50, lineStyle: { color: '#F59E0B', type: 'dashed' } }
+                            { yAxis: 90, lineStyle: { color: '#22c55e', type: 'dashed' } },
+                            { yAxis: 50, lineStyle: { color: '#f59e0b', type: 'dashed' } }
                         ]
                     }
                 },
                 {
                     name: 'Desktop',
                     type: 'line',
-                    smooth: true,
-                    data: chartData.performance.desktop.scores,
-                    lineStyle: { color: '#10B981' },
-                    itemStyle: { color: '#10B981' },
-                    areaStyle: { color: 'rgba(16, 185, 129, 0.1)' }
+                    smooth: smoothLines,
+                    data: bucketed.desktop?.performance || [],
+                    lineStyle: { color: '#34d399' },
+                    itemStyle: { color: '#34d399' },
+                    areaStyle: { color: 'rgba(52, 211, 153, 0.12)' }
                 }
             ]
         });
@@ -269,6 +326,7 @@
         function createMetricChart(elementId, mobileData, desktopData, dates, unit = 'ms') {
             const chart = echarts.init(document.getElementById(elementId));
             chart.setOption({
+                textStyle: { color: textColor },
                 tooltip: {
                     trigger: 'axis',
                     formatter: function(params) {
@@ -281,22 +339,23 @@
                 },
                 legend: {
                     data: ['Mobile', 'Desktop'],
-                    bottom: 0
+                    bottom: 0,
+                    textStyle: { color: textColor }
                 },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '15%',
-                    containLabel: true
-                },
+                grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
                 xAxis: {
                     type: 'category',
                     boundaryGap: false,
                     data: dates,
-                    axisLabel: { rotate: 45, fontSize: 10 }
+                    axisLabel: { rotate: 45, fontSize: 10, color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 yAxis: {
-                    type: 'value'
+                    type: 'value',
+                    axisLabel: { color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 series: [
                     {
@@ -304,31 +363,30 @@
                         type: 'line',
                         smooth: true,
                         data: mobileData,
-                        lineStyle: { color: '#3B82F6' },
-                        itemStyle: { color: '#3B82F6' }
+                        lineStyle: { color: '#60a5fa' },
+                        itemStyle: { color: '#60a5fa' }
                     },
                     {
                         name: 'Desktop',
                         type: 'line',
                         smooth: true,
                         data: desktopData,
-                        lineStyle: { color: '#10B981' },
-                        itemStyle: { color: '#10B981' }
+                        lineStyle: { color: '#34d399' },
+                        itemStyle: { color: '#34d399' }
                     }
                 ]
             });
             return chart;
         }
 
-        // Create metric charts
         const mobileDates = chartData.webVitals.mobile.dates;
         const desktopDates = chartData.webVitals.desktop.dates;
-        const dates = mobileDates.length > desktopDates.length ? mobileDates : desktopDates;
+        const dates = perfLabels.length ? perfLabels : (mobileDates.length > desktopDates.length ? mobileDates : desktopDates);
 
-        createMetricChart('lcpChart', chartData.webVitals.mobile.lcp, chartData.webVitals.desktop.lcp, dates);
-        createMetricChart('fcpChart', chartData.webVitals.mobile.fcp, chartData.webVitals.desktop.fcp, dates);
-        createMetricChart('tbtChart', chartData.webVitals.mobile.tbt, chartData.webVitals.desktop.tbt, dates);
-        createMetricChart('clsChart', chartData.webVitals.mobile.cls, chartData.webVitals.desktop.cls, dates, '');
+        createMetricChart('lcpChart', bucketed.mobile?.lcp || chartData.webVitals.mobile.lcp, bucketed.desktop?.lcp || chartData.webVitals.desktop.lcp, dates, 'ms');
+        createMetricChart('fcpChart', bucketed.mobile?.fcp || chartData.webVitals.mobile.fcp, bucketed.desktop?.fcp || chartData.webVitals.desktop.fcp, dates, 'ms');
+        createMetricChart('tbtChart', bucketed.mobile?.tbt || chartData.webVitals.mobile.tbt, bucketed.desktop?.tbt || chartData.webVitals.desktop.tbt, dates, 'ms');
+        createMetricChart('clsChart', bucketed.mobile?.cls || chartData.webVitals.mobile.cls, bucketed.desktop?.cls || chartData.webVitals.desktop.cls, dates, '');
 
         // Bundle Size Charts
         if (chartData.bundleSize && document.getElementById('bundleTotalChart')) {
@@ -342,9 +400,9 @@
                 return value >= 1000 ? (value / 1000).toFixed(2) + 's' : value + 'ms';
             };
 
-            // Total Bundle Size Chart (Uncompressed vs Transfer)
             const bundleTotalChart = echarts.init(document.getElementById('bundleTotalChart'));
             bundleTotalChart.setOption({
+                textStyle: { color: textColor },
                 tooltip: {
                     trigger: 'axis',
                     formatter: function(params) {
@@ -357,23 +415,23 @@
                 },
                 legend: {
                     data: ['Uncompressed', 'Transfer (Gzipped)'],
-                    bottom: 0
+                    bottom: 0,
+                    textStyle: { color: textColor }
                 },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '15%',
-                    containLabel: true
-                },
+                grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
                 xAxis: {
                     type: 'category',
                     boundaryGap: false,
                     data: chartData.bundleSize.dates,
-                    axisLabel: { rotate: 45, fontSize: 10 }
+                    axisLabel: { rotate: 45, fontSize: 10, color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 yAxis: {
                     type: 'value',
-                    axisLabel: { formatter: (v) => formatSize(v) }
+                    axisLabel: { formatter: (v) => formatSize(v), color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 series: [
                     {
@@ -381,25 +439,25 @@
                         type: 'line',
                         smooth: true,
                         data: chartData.bundleSize.total,
-                        lineStyle: { color: '#6366F1' },
-                        itemStyle: { color: '#6366F1' },
-                        areaStyle: { color: 'rgba(99, 102, 241, 0.1)' }
+                        lineStyle: { color: '#a78bfa' },
+                        itemStyle: { color: '#a78bfa' },
+                        areaStyle: { color: 'rgba(167, 139, 250, 0.14)' }
                     },
                     {
                         name: 'Transfer (Gzipped)',
                         type: 'line',
                         smooth: true,
                         data: chartData.bundleSize.totalTransfer,
-                        lineStyle: { color: '#10B981', type: 'dashed' },
-                        itemStyle: { color: '#10B981' },
-                        areaStyle: { color: 'rgba(16, 185, 129, 0.1)' }
+                        lineStyle: { color: '#34d399', type: 'dashed' },
+                        itemStyle: { color: '#34d399' },
+                        areaStyle: { color: 'rgba(52, 211, 153, 0.14)' }
                     }
                 ]
             });
 
-            // Bundle Breakdown Chart (stacked area)
             const bundleBreakdownChart = echarts.init(document.getElementById('bundleBreakdownChart'));
             bundleBreakdownChart.setOption({
+                textStyle: { color: textColor },
                 tooltip: {
                     trigger: 'axis',
                     formatter: function(params) {
@@ -412,23 +470,23 @@
                 },
                 legend: {
                     data: ['JavaScript', 'CSS', 'Images', 'Fonts', 'HTML'],
-                    bottom: 0
+                    bottom: 0,
+                    textStyle: { color: textColor }
                 },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '15%',
-                    containLabel: true
-                },
+                grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
                 xAxis: {
                     type: 'category',
                     boundaryGap: false,
                     data: chartData.bundleSize.dates,
-                    axisLabel: { rotate: 45, fontSize: 10 }
+                    axisLabel: { rotate: 45, fontSize: 10, color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 yAxis: {
                     type: 'value',
-                    axisLabel: { formatter: (v) => formatSize(v) }
+                    axisLabel: { formatter: (v) => formatSize(v), color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 series: [
                     {
@@ -437,9 +495,9 @@
                         stack: 'Total',
                         smooth: true,
                         data: chartData.bundleSize.javascript,
-                        lineStyle: { color: '#EAB308' },
-                        itemStyle: { color: '#EAB308' },
-                        areaStyle: { color: 'rgba(234, 179, 8, 0.3)' }
+                        lineStyle: { color: '#facc15' },
+                        itemStyle: { color: '#facc15' },
+                        areaStyle: { color: 'rgba(250, 204, 21, 0.28)' }
                     },
                     {
                         name: 'CSS',
@@ -447,9 +505,9 @@
                         stack: 'Total',
                         smooth: true,
                         data: chartData.bundleSize.css,
-                        lineStyle: { color: '#3B82F6' },
-                        itemStyle: { color: '#3B82F6' },
-                        areaStyle: { color: 'rgba(59, 130, 246, 0.3)' }
+                        lineStyle: { color: '#60a5fa' },
+                        itemStyle: { color: '#60a5fa' },
+                        areaStyle: { color: 'rgba(96, 165, 250, 0.28)' }
                     },
                     {
                         name: 'Images',
@@ -457,9 +515,9 @@
                         stack: 'Total',
                         smooth: true,
                         data: chartData.bundleSize.images,
-                        lineStyle: { color: '#22C55E' },
-                        itemStyle: { color: '#22C55E' },
-                        areaStyle: { color: 'rgba(34, 197, 94, 0.3)' }
+                        lineStyle: { color: '#22c55e' },
+                        itemStyle: { color: '#22c55e' },
+                        areaStyle: { color: 'rgba(34, 197, 94, 0.28)' }
                     },
                     {
                         name: 'Fonts',
@@ -467,9 +525,9 @@
                         stack: 'Total',
                         smooth: true,
                         data: chartData.bundleSize.fonts,
-                        lineStyle: { color: '#A855F7' },
-                        itemStyle: { color: '#A855F7' },
-                        areaStyle: { color: 'rgba(168, 85, 247, 0.3)' }
+                        lineStyle: { color: '#c084fc' },
+                        itemStyle: { color: '#c084fc' },
+                        areaStyle: { color: 'rgba(192, 132, 252, 0.28)' }
                     },
                     {
                         name: 'HTML',
@@ -477,16 +535,16 @@
                         stack: 'Total',
                         smooth: true,
                         data: chartData.bundleSize.html,
-                        lineStyle: { color: '#F97316' },
-                        itemStyle: { color: '#F97316' },
-                        areaStyle: { color: 'rgba(249, 115, 22, 0.3)' }
+                        lineStyle: { color: '#fb923c' },
+                        itemStyle: { color: '#fb923c' },
+                        areaStyle: { color: 'rgba(251, 146, 60, 0.28)' }
                     }
                 ]
             });
 
-            // Download Time Chart
             const downloadTimeChart = echarts.init(document.getElementById('downloadTimeChart'));
             downloadTimeChart.setOption({
+                textStyle: { color: textColor },
                 tooltip: {
                     trigger: 'axis',
                     formatter: function(params) {
@@ -499,23 +557,23 @@
                 },
                 legend: {
                     data: ['JavaScript', 'CSS', 'Images'],
-                    bottom: 0
+                    bottom: 0,
+                    textStyle: { color: textColor }
                 },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '15%',
-                    containLabel: true
-                },
+                grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
                 xAxis: {
                     type: 'category',
                     boundaryGap: false,
                     data: chartData.bundleSize.dates,
-                    axisLabel: { rotate: 45, fontSize: 10 }
+                    axisLabel: { rotate: 45, fontSize: 10, color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 yAxis: {
                     type: 'value',
-                    axisLabel: { formatter: (v) => formatTime(v) }
+                    axisLabel: { formatter: (v) => formatTime(v), color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 series: [
                     {
@@ -523,31 +581,31 @@
                         type: 'line',
                         smooth: true,
                         data: chartData.bundleSize.jsDownloadTime,
-                        lineStyle: { color: '#EAB308' },
-                        itemStyle: { color: '#EAB308' }
+                        lineStyle: { color: '#facc15' },
+                        itemStyle: { color: '#facc15' }
                     },
                     {
                         name: 'CSS',
                         type: 'line',
                         smooth: true,
                         data: chartData.bundleSize.cssDownloadTime,
-                        lineStyle: { color: '#3B82F6' },
-                        itemStyle: { color: '#3B82F6' }
+                        lineStyle: { color: '#60a5fa' },
+                        itemStyle: { color: '#60a5fa' }
                     },
                     {
                         name: 'Images',
                         type: 'line',
                         smooth: true,
                         data: chartData.bundleSize.imageDownloadTime,
-                        lineStyle: { color: '#22C55E' },
-                        itemStyle: { color: '#22C55E' }
+                        lineStyle: { color: '#22c55e' },
+                        itemStyle: { color: '#22c55e' }
                     }
                 ]
             });
 
-            // Load Time & Slow Requests Chart
             const loadTimeChart = echarts.init(document.getElementById('loadTimeChart'));
             loadTimeChart.setOption({
+                textStyle: { color: textColor },
                 tooltip: {
                     trigger: 'axis',
                     formatter: function(params) {
@@ -564,32 +622,35 @@
                 },
                 legend: {
                     data: ['Load Time', 'Slow Requests'],
-                    bottom: 0
+                    bottom: 0,
+                    textStyle: { color: textColor }
                 },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '15%',
-                    containLabel: true
-                },
+                grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
                 xAxis: {
                     type: 'category',
                     boundaryGap: false,
                     data: chartData.bundleSize.dates,
-                    axisLabel: { rotate: 45, fontSize: 10 }
+                    axisLabel: { rotate: 45, fontSize: 10, color: textColor },
+                    axisLine,
+                    splitLine,
                 },
                 yAxis: [
                     {
                         type: 'value',
                         name: 'Time',
                         position: 'left',
-                        axisLabel: { formatter: (v) => formatTime(v) }
+                        axisLabel: { formatter: (v) => formatTime(v), color: textColor },
+                        axisLine,
+                        splitLine,
                     },
                     {
                         type: 'value',
                         name: 'Count',
                         position: 'right',
-                        minInterval: 1
+                        minInterval: 1,
+                        axisLabel: { color: textColor },
+                        axisLine,
+                        splitLine,
                     }
                 ],
                 series: [
@@ -598,9 +659,9 @@
                         type: 'line',
                         smooth: true,
                         data: chartData.bundleSize.loadTime,
-                        lineStyle: { color: '#0891B2' },
-                        itemStyle: { color: '#0891B2' },
-                        areaStyle: { color: 'rgba(8, 145, 178, 0.1)' }
+                        lineStyle: { color: '#06b6d4' },
+                        itemStyle: { color: '#06b6d4' },
+                        areaStyle: { color: 'rgba(6, 182, 212, 0.14)' }
                     },
                     {
                         name: 'Slow Requests',
@@ -609,14 +670,13 @@
                         data: chartData.bundleSize.slowRequests,
                         itemStyle: { 
                             color: function(params) {
-                                return params.value > 0 ? '#EF4444' : '#D1D5DB';
+                                return params.value > 0 ? '#f87171' : '#cbd5e1';
                             }
                         }
                     }
                 ]
             });
 
-            // Add bundle charts to resize handler
             window.addEventListener('resize', () => {
                 bundleTotalChart.resize();
                 bundleBreakdownChart.resize();
@@ -625,10 +685,39 @@
             });
         }
 
-        // Resize charts on window resize
         window.addEventListener('resize', () => {
             performanceChart.resize();
         });
+
+        // Filmstrip interactions
+        const frames = @json($filmstripFrames ?? []);
+        const preview = document.getElementById('filmstripPreview');
+        const eventLabel = document.getElementById('filmstripEvent');
+        const timestampLabel = document.getElementById('filmstripTimestamp');
+
+        const selectFrame = (frame) => {
+            if (!frame || !preview || !eventLabel || !timestampLabel) return;
+            preview.src = frame.url || '';
+            eventLabel.textContent = (frame.event || 'FRAME').toUpperCase();
+            timestampLabel.textContent = `${(frame.timestamp ?? 0) / 1000}s`;
+            document.querySelectorAll('[data-frame]').forEach(el => {
+                const isActive = Number(el.dataset.frame) === Number(frame.timestamp);
+                el.classList.toggle('ring-2', isActive);
+                el.classList.toggle('ring-brand-400', isActive);
+                el.classList.toggle('border-brand-400/60', isActive);
+            });
+        };
+
+        if (frames.length && preview) {
+            const buttons = document.querySelectorAll('[data-frame]');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const frame = frames.find(f => Number(f.timestamp) === Number(btn.dataset.frame));
+                    selectFrame(frame);
+                });
+            });
+            selectFrame(frames[frames.length - 1]);
+        }
     </script>
     </x-slot>
 </x-app-layout>

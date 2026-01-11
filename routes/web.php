@@ -25,6 +25,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/pages/{page}', [DashboardController::class, 'show'])->name('dashboard.page');
+    Route::get('/dashboard/account', [DashboardController::class, 'account'])->name('dashboard.account');
     Route::get('/api/pages/{page}/metrics', [DashboardController::class, 'pageMetrics']);
     
     // Screenshot proxy (serves private bucket files through authenticated controller)
