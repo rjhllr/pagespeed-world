@@ -28,10 +28,13 @@ class SitemapController extends Controller
                     ];
                 }
                 foreach ($posts as $post) {
-                    $urls[] = [
-                        'loc' => url($locale . '/blog/' . $post['slug']),
-                        'lastmod' => $post['date'] ?? now()->toDateString(),
-                    ];
+                    // Only include post if it has content for this locale
+                    if (isset($post['locales'][$locale])) {
+                        $urls[] = [
+                            'loc' => url($locale . '/blog/' . $post['slug']),
+                            'lastmod' => $post['date'] ?? now()->toDateString(),
+                        ];
+                    }
                 }
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Marketing;
 
+use App\Helpers\BlogContentProcessor;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -73,7 +74,7 @@ class MarketingBlogController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $localized = $post['locales'][$locale] ?? $post['locales']['en'] ?? null;
+        $localized = $post['locales'][$locale] ?? null;
 
         if (!$localized) {
             throw new NotFoundHttpException();
@@ -82,6 +83,9 @@ class MarketingBlogController extends Controller
         $cacheKey = implode(':', ['marketing', 'blog-show', $locale, $slug, sha1(request()->getRequestUri())]);
 
         $html = Cache::remember($cacheKey, now()->addMinutes($this->cacheMinutes), function () use ($locale, $slug, $post, $localized) {
+            // Process blog content to generate TOC and enhance formatting
+            $processed = BlogContentProcessor::process($localized['body'] ?? '');
+
             $meta = [
                 'description' => Str::limit(strip_tags($localized['body'] ?? ''), 160),
                 'url' => url($locale . '/blog/' . $slug),
@@ -90,7 +94,8 @@ class MarketingBlogController extends Controller
             return view('marketing.blog.show', [
                 'title' => $localized['title'] ?? $post['slug'],
                 'post' => $post,
-                'content' => $localized,
+                'content' => array_merge($localized, ['body' => $processed['html']]),
+                'toc' => $processed['toc'],
                 'meta' => $meta,
             ])->render();
         });
